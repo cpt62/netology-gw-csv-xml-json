@@ -13,6 +13,9 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 
+import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.Matchers.*;
+
 
 public class CsvToJsonTests {
     private static final EmployeeJsonXMLBuilder builder;
@@ -67,14 +70,44 @@ public class CsvToJsonTests {
     }
 
     @Test
-    public void emptyCsvFileTest() throws IOException {
+    public void emptyCsvFileTest() /*throws IOException*/ {
         String inputEmptyCsv = "TestFolder/01_task/inputCSV/empty.csv";
         // Данная переменная выступает в роли заглушки
         String actEmptyJson = "TestFolder/01_task/act/data_empty.json";
         Assertions.assertThrows(IllegalArgumentException.class, () -> getCsvToJson(inputEmptyCsv, actEmptyJson));
-
     }
 
+    //Hamcrest
+    @Test
+    public void hamcrestEmptyCsvFileTest() {
+        String inputEmptyCsv = "TestFolder/01_task/inputCSV/empty.csv";
+        String actEmptyJson = "TestFolder/01_task/act/data_empty.json";
+        IllegalArgumentException exception =
+                Assertions.assertThrows(IllegalArgumentException.class,
+                        () -> getCsvToJson(inputEmptyCsv, actEmptyJson));
+        assertThat(exception.getMessage(), equalTo("CSV пуст"));
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+            "TestFolder/01_task/inputCSV/data.csv, TestFolder/01_task/outputJson/data.json, TestFolder/01_task/act/data.json",
+            "TestFolder/01_task/inputCSV/data_big.csv, TestFolder/01_task/outputJson/data_big.json, TestFolder/01_task/act/data_big.json"
+    })
+
+    public void hamcrestEqualsResultConvertCsvToJson(String inputCsvFile, String expectedJsonFile, String actualJsonFile) {
+
+        getCsvToJson(inputCsvFile, expectedJsonFile);
+
+        // Получаем списки
+        List<Employee> expected = builder.jsonToList(expectedJsonFile);
+        List<Employee> actual = builder.jsonToList(actualJsonFile);
+
+        assertThat("Эталонный файл не должен быть пустым", expected, is(not(empty())));
+
+        assertThat("Количество записей в файле не совпадает", actual, hasSize(expected.size()));
+
+        assertThat("Списки сотрудников должны быть эквивалентны", actual, is(equalTo(expected)));
+    }
 
     @AfterAll
     public static void clear() {
