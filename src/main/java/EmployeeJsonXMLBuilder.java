@@ -3,6 +3,8 @@ import com.opencsv.bean.CsvToBean;
 import org.w3c.dom.*;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -11,7 +13,9 @@ public class EmployeeJsonXMLBuilder {
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
     private List<Employee> parseCSV(CsvToBean<Employee> toBean) {
-        return toBean.parse();
+        List<Employee> list = toBean.parse();
+        if (list.isEmpty()) throw new IllegalArgumentException("CSV пуст");
+        return list;
     }
 
     private String objToJson(List<Employee> employee) {
@@ -40,7 +44,8 @@ public class EmployeeJsonXMLBuilder {
     }
 
 
-    public void createJsonFromCSV(String fileName, CsvToBean<Employee> toBean) {
+    public void createJsonFromCSV(String fileName, CsvToBean<Employee> toBean) throws IOException {
+        File file = new File(fileName);
         try (FileWriter fw = new FileWriter(fileName)) {
             fw.write(objToJson(parseCSV(toBean)));
         } catch (IOException ex) {
